@@ -4,7 +4,7 @@ import com.badlogic.gdx.Game;
 
 public class Launcher {
     public static void main (String[] args) {
-        Game myGame = new StarfishCollectorGame();
+        Game myGame = new StarfishGame();
         //LwjglApplication launcher = new LwjglApplication( myGame, "Starfish Collector", 800, 600 );
     }
 }

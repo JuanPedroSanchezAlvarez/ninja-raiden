@@ -1,16 +1,10 @@
 package com.ninjaraiden.game;
 
-import com.ninjaraiden.game.framework.GameBeta;
+import com.ninjaraiden.game.framework.BaseGame;
 
-public class NinjaRaidenGame extends GameBeta {
-
-	@Override
-	public void initialize () {}
+public class NinjaRaidenGame extends BaseGame {
 
 	@Override
-	public void update (float dt) {}
-
-	@Override
-	public void dispose () {}
+	public void create() {}
 
 }
