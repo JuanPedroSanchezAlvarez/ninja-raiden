@@ -18,24 +18,18 @@ public class MenuScreen extends BaseScreen {
         ocean.setSize(800,600);
         BaseActor title = new BaseActor(0,0, mainStage);
         title.loadTexture( "assets/starfish-collector.png" );
-        title.centerAtPosition(400,300);
-        title.moveBy(0,100);
         TextButton startButton = new TextButton( "Start", BaseGame.textButtonStyle );
-        startButton.setPosition(150,150);
-        uiStage.addActor(startButton);
         startButton.addListener(
                 (Event e) ->
                 {
                     if ( !(e instanceof InputEvent) ||
                             !((InputEvent)e).getType().equals(InputEvent.Type.touchDown) )
                         return false;
-                    StarfishGame.setActiveScreen( new LevelScreen() );
+                    StarfishGame.setActiveScreen( new StoryScreen() );
                     return false;
                 }
         );
         TextButton quitButton = new TextButton( "Quit", BaseGame.textButtonStyle );
-        quitButton.setPosition(500,150);
-        uiStage.addActor(quitButton);
         quitButton.addListener(
                 (Event e) ->
                 {
@@ -46,12 +40,16 @@ public class MenuScreen extends BaseScreen {
                     return false;
                 }
         );
+        uiTable.add(title).colspan(2);
+        uiTable.row();
+        uiTable.add(startButton);
+        uiTable.add(quitButton);
     }
 
     @Override
     public void update(float dt) {
         if (Gdx.input.isKeyPressed(Input.Keys.S))
-            StarfishGame.setActiveScreen( new LevelScreen() );
+            StarfishGame.setActiveScreen( new StoryScreen() );
     }
 
     public boolean keyDown(int keyCode)

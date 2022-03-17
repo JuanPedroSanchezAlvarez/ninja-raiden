@@ -10,15 +10,14 @@ import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
-import com.ninjaraiden.game.framework.BaseActor;
-import com.ninjaraiden.game.framework.BaseGame;
-import com.ninjaraiden.game.framework.BaseScreen;
+import com.ninjaraiden.game.framework.*;
 
 public class LevelScreen extends BaseScreen {
 
     private Turtle turtle;
     private boolean win;
     private Label starfishLabel;
+    private DialogBox dialogBox;
 
     @Override
     public void initialize() {
@@ -38,16 +37,12 @@ public class LevelScreen extends BaseScreen {
         win = false;
         starfishLabel = new Label("Starfish Left:", BaseGame.labelStyle);
         starfishLabel.setColor( Color.CYAN );
-        starfishLabel.setPosition( 20, 520 );
-        uiStage.addActor(starfishLabel);
         Button.ButtonStyle buttonStyle = new Button.ButtonStyle();
         Texture buttonTex = new Texture( Gdx.files.internal("assets/undo.png") );
         TextureRegion buttonRegion = new TextureRegion(buttonTex);
         buttonStyle.up = new TextureRegionDrawable( buttonRegion );
         Button restartButton = new Button( buttonStyle );
         restartButton.setColor( Color.CYAN );
-        restartButton.setPosition(720,520);
-        uiStage.addActor(restartButton);
         restartButton.addListener(
                 (Event e) ->
                 {
@@ -58,37 +53,67 @@ public class LevelScreen extends BaseScreen {
                     return false;
                 }
         );
+        uiTable.pad(10);
+        uiTable.add(starfishLabel).top();
+        uiTable.add().expandX().expandY();
+        uiTable.add(restartButton).top();
+        Sign sign1 = new Sign(20,400, mainStage);
+        sign1.setText("West Starfish Bay");
+        Sign sign2 = new Sign(600,300, mainStage);
+        sign2.setText("East Starfish Bay");
+        dialogBox = new DialogBox(0,0, uiStage);
+        dialogBox.setBackgroundColor( Color.TAN );
+        dialogBox.setFontColor( Color.BROWN );
+        dialogBox.setDialogSize(600, 100);
+        dialogBox.setFontScale(0.80f);
+        dialogBox.alignCenter();
+        dialogBox.setVisible(false);
+        uiTable.row();
+        uiTable.add(dialogBox).colspan(3);
     }
 
     @Override
     public void update(float dt) {
         for (BaseActor rockActor : BaseActor.getList(mainStage, "Rock"))
             turtle.preventOverlap(rockActor);
-        for (BaseActor starfishActor : BaseActor.getList(mainStage, "Starfish"))
-        {
-            Starfish starfish = (Starfish)starfishActor;
-            if ( turtle.overlaps(starfish) && !starfish.isCollected() )
-            {
+        for (BaseActor starfishActor : BaseActor.getList(mainStage, "Starfish")) {
+            Starfish starfish = (Starfish) starfishActor;
+            if (turtle.overlaps(starfish) && !starfish.isCollected()) {
                 starfish.collect();
-                Whirlpool whirl = new Whirlpool(0,0, mainStage);
-                whirl.centerAtActor( starfish );
+                Whirlpool whirl = new Whirlpool(0, 0, mainStage);
+                whirl.centerAtActor(starfish);
                 whirl.setOpacity(0.25f);
             }
         }
-        if ( BaseActor.count(mainStage, "Starfish") == 0 && !win )
-        {
+        if (BaseActor.count(mainStage, "Starfish") == 0 && !win) {
             win = true;
-            BaseActor youWinMessage = new BaseActor(0,0,uiStage);
+            BaseActor youWinMessage = new BaseActor(0, 0, uiStage);
             youWinMessage.loadTexture("assets/you-win.png");
-            youWinMessage.centerAtPosition(400,300);
+            youWinMessage.centerAtPosition(400, 300);
             youWinMessage.setOpacity(0);
-            youWinMessage.addAction( Actions.delay(1) );
-            youWinMessage.addAction( Actions.after( Actions.fadeIn(1) ) );
+            youWinMessage.addAction(Actions.delay(1));
+            youWinMessage.addAction(Actions.after(Actions.fadeIn(1)));
         }
         starfishLabel.setText("Starfish Left: " + BaseActor.count(mainStage, "Starfish"));
+        for (BaseActor signActor : BaseActor.getList(mainStage, "Sign")) {
+            Sign sign = (Sign) signActor;
+            turtle.preventOverlap(sign);
+            boolean nearby = turtle.isWithinDistance(4, sign);
+            if (nearby && !sign.isViewing()) {
+                dialogBox.setText(sign.getText());
+                dialogBox.setVisible(true);
+                sign.setViewing(true);
+            }
+            if (sign.isViewing() && !nearby) {
+                dialogBox.setText(" ");
+                dialogBox.setVisible(false);
+                sign.setViewing(false);
+            }
+        }
     }
 
-    @Override
+
+        @Override
     public boolean scrolled(float amountX, float amountY) {
         return false;
     }
