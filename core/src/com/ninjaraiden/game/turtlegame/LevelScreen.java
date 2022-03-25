@@ -6,6 +6,8 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.maps.MapObject;
+import com.badlogic.gdx.maps.MapProperties;
 import com.badlogic.gdx.scenes.scene2d.Event;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
@@ -28,6 +30,27 @@ public class LevelScreen extends BaseScreen {
 
     @Override
     public void initialize() {
+        TilemapActor tma = new TilemapActor("assets/map.tmx", mainStage);
+        for (MapObject obj : tma.getTileList("Starfish") )
+        {
+            MapProperties props = obj.getProperties();
+            new Starfish( (float)props.get("x"), (float)props.get("y"), mainStage );
+        }
+        for (MapObject obj : tma.getTileList("Rock") )
+        {
+            MapProperties props = obj.getProperties();
+            new Rock( (float)props.get("x"), (float)props.get("y"), mainStage );
+        }
+        for (MapObject obj : tma.getTileList("Sign") )
+        {
+            MapProperties props = obj.getProperties();
+            Sign s = new Sign( (float)props.get("x"), (float)props.get("y"), mainStage );
+            s.setText( (String)props.get("message") );
+        }
+        MapObject startPoint = tma.getRectangleList("start").get(0);
+        MapProperties props = startPoint.getProperties();
+        turtle = new Turtle( (float)props.get("x"), (float)props.get("y"), mainStage);
+
         waterDrop = Gdx.audio.newSound(Gdx.files.internal("assets/Water_Drop.ogg"));
         instrumental = Gdx.audio.newMusic(Gdx.files.internal("assets/Master_of_the_Feast.ogg"));
         oceanSurf = Gdx.audio.newMusic(Gdx.files.internal("assets/Ocean_Waves.ogg"));
@@ -39,7 +62,7 @@ public class LevelScreen extends BaseScreen {
         oceanSurf.setVolume(audioVolume);
         oceanSurf.play();
 
-        BaseActor ocean = new BaseActor(0,0, mainStage);
+/*        BaseActor ocean = new BaseActor(0,0, mainStage);
         ocean.loadTexture( "assets/water.jpg" );
         ocean.setSize(1200,900);
         BaseActor.setWorldBounds(ocean);
@@ -51,7 +74,7 @@ public class LevelScreen extends BaseScreen {
         new Rock(100,300, mainStage);
         new Rock(300,350, mainStage);
         new Rock(450,200, mainStage);
-        turtle = new Turtle(20,20, mainStage);
+        turtle = new Turtle(20,20, mainStage);*/
         win = false;
         starfishLabel = new Label("Starfish Left:", BaseGame.labelStyle);
         starfishLabel.setColor( Color.CYAN );
@@ -96,10 +119,10 @@ public class LevelScreen extends BaseScreen {
         uiTable.add().expandX().expandY();
         uiTable.add(muteButton).top();
         uiTable.add(restartButton).top();
-        Sign sign1 = new Sign(20,400, mainStage);
+        /* Sign sign1 = new Sign(20,400, mainStage);
         sign1.setText("West Starfish Bay");
         Sign sign2 = new Sign(600,300, mainStage);
-        sign2.setText("East Starfish Bay");
+        sign2.setText("East Starfish Bay");*/
         dialogBox = new DialogBox(0,0, uiStage);
         dialogBox.setBackgroundColor( Color.TAN );
         dialogBox.setFontColor( Color.BROWN );
@@ -109,8 +132,6 @@ public class LevelScreen extends BaseScreen {
         dialogBox.setVisible(false);
         uiTable.row();
         uiTable.add(dialogBox).colspan(4);
-
-
 
     }
 
