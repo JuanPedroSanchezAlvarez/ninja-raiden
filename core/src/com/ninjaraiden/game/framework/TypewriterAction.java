@@ -1,24 +1,30 @@
 package com.ninjaraiden.game.framework;
 
 public class TypewriterAction extends SetTextAction {
+
+    private static final float CHARACTERS_PER_SECOND = 30;
     private float elapsedTime;
-    private float charactersPerSecond;
-    public TypewriterAction(String t)
-    {
+    private int numberOfCharacters;
+    private String partialText;
+
+    public TypewriterAction(final String t) {
         super(t);
         elapsedTime = 0;
-        charactersPerSecond = 30;
+        numberOfCharacters = 0;
+        partialText = "";
     }
-    public boolean act(float dt)
-    {
-        elapsedTime += dt;
-        int numberOfCharacters = (int)(elapsedTime * charactersPerSecond);
-        if (numberOfCharacters > textToDisplay.length())
+
+    @Override
+    public boolean act(final float delta) {
+        elapsedTime += delta;
+        numberOfCharacters = (int)(elapsedTime * CHARACTERS_PER_SECOND);
+        if (numberOfCharacters > textToDisplay.length()) {
             numberOfCharacters = textToDisplay.length();
-        String partialText = textToDisplay.substring(0, numberOfCharacters);
-        DialogBox db = (DialogBox)target;
-        db.setText( partialText );
-        // action is complete when all characters have been displayed
-        return ( numberOfCharacters >= textToDisplay.length() );
+        }
+        partialText = textToDisplay.substring(0, numberOfCharacters);
+        dialogBox = (DialogBox)target;
+        dialogBox.setText(partialText);
+        return (numberOfCharacters >= textToDisplay.length());
     }
+
 }

@@ -6,18 +6,16 @@ public class DropTargetActor extends BaseActor {
 
     private boolean targetable;
 
-    public DropTargetActor(float x, float y, Stage s) {
+    public DropTargetActor(final float x, final float y, final Stage s) {
         super(x, y, s);
         targetable = true;
     }
 
-    public void setTargetable(boolean t)
-    {
+    public void setTargetable(final boolean t) {
         targetable = t;
     }
 
-    public boolean isTargetable()
-    {
+    public boolean isTargetable() {
         return targetable;
     }
 

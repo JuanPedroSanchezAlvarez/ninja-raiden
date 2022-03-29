@@ -20,16 +20,11 @@ import java.util.Iterator;
 
 public class TilemapActor extends Actor {
 
-    // window dimensions
-    public static int windowWidth = 800;
-    public static int windowHeight = 600;
-    private TiledMap tiledMap;
-    private OrthographicCamera tiledCamera;
-    private OrthoCachedTiledMapRenderer tiledMapRenderer;
+    private final TiledMap tiledMap;
+    private final OrthographicCamera tiledCamera;
+    private final OrthoCachedTiledMapRenderer tiledMapRenderer;
 
-    public TilemapActor(String filename, Stage theStage)
-    {
-        // set up tile map, renderer, and camera
+    public TilemapActor(final String filename, final Stage theStage) {
         tiledMap = new TmxMapLoader().load(filename);
         int tileWidth = (int)tiledMap.getProperties().get("tilewidth");
         int tileHeight = (int)tiledMap.getProperties().get("tileheight");
@@ -41,81 +36,70 @@ public class TilemapActor extends Actor {
         tiledMapRenderer = new OrthoCachedTiledMapRenderer(tiledMap);
         tiledMapRenderer.setBlending(true);
         tiledCamera = new OrthographicCamera();
-        tiledCamera.setToOrtho(false, windowWidth, windowHeight);
+        tiledCamera.setToOrtho(false, Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT);
         tiledCamera.update();
         theStage.addActor(this);
     }
-    public void act(float dt)
-    {
-        super.act( dt );
+
+    @Override
+    public void act(final float delta) {
+        super.act(delta);
     }
-    public void draw(Batch batch, float parentAlpha)
-    {
-        // adjust tilemap camera to stay in sync with main camera
+
+    @Override
+    public void draw(final Batch batch, final float parentAlpha) {
         Camera mainCamera = getStage().getCamera();
         tiledCamera.position.x = mainCamera.position.x;
         tiledCamera.position.y = mainCamera.position.y;
         tiledCamera.update();
         tiledMapRenderer.setView(tiledCamera);
-        // need the following code to force batch order,
-        // otherwise it is batched and rendered last
+        // Need the following code to force batch order, otherwise it is batched and rendered last
         batch.end();
         tiledMapRenderer.render();
         batch.begin();
     }
-    public ArrayList<MapObject> getRectangleList(String propertyName)
-    {
-        ArrayList<MapObject> list = new ArrayList<MapObject>();
-        for ( MapLayer layer : tiledMap.getLayers() )
-        {
-            for ( MapObject obj : layer.getObjects() )
-            {
-                if ( !(obj instanceof RectangleMapObject) )
-                    continue;
-                MapProperties props = obj.getProperties();
-                if ( props.containsKey("name") && props.get("name").equals(propertyName) )
-                    list.add(obj);
-            }
-        }
-        return list;
-    }
-    public ArrayList<MapObject> getTileList(String propertyName)
-    {
-        ArrayList<MapObject> list = new ArrayList<MapObject>();
-        for ( MapLayer layer : tiledMap.getLayers() )
-        {
-            for ( MapObject obj : layer.getObjects() )
-            {
-                if ( !(obj instanceof TiledMapTileMapObject) )
-                    continue;
-                MapProperties props = obj.getProperties();
-                // Default MapProperties are stored within associated Tile object
-                // Instance-specific overrides are stored in MapObject
-                TiledMapTileMapObject tmtmo = (TiledMapTileMapObject)obj;
-                TiledMapTile t = tmtmo.getTile();
-                MapProperties defaultProps = t.getProperties();
-                if ( defaultProps.containsKey("name") &&
-                        defaultProps.get("name").equals(propertyName) )
-                    list.add(obj);
-                // get list of default property keys
-                Iterator<String> propertyKeys = defaultProps.getKeys();
-                // iterate over keys; copy default values into props if needed
-                while ( propertyKeys.hasNext() )
-                {
-                    String key = propertyKeys.next();
-                    // check if value already exists; if not, create property with default value
-                    if ( props.containsKey(key) )
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        Object value = defaultProps.get(key);
-                        props.put( key, value );
+
+    public ArrayList<MapObject> getRectangleList(final String propertyName) {
+        ArrayList<MapObject> list = new ArrayList<>();
+        for (MapLayer layer : tiledMap.getLayers()) {
+            for (MapObject obj : layer.getObjects()) {
+                if (obj instanceof RectangleMapObject) {
+                    if (obj.getProperties().containsKey("name") && obj.getProperties().get("name").equals(propertyName)) {
+                        list.add(obj);
                     }
                 }
             }
         }
         return list;
     }
+
+    public ArrayList<MapObject> getTileList(final String propertyName) {
+        ArrayList<MapObject> list = new ArrayList<>();
+        for (MapLayer layer : tiledMap.getLayers()) {
+            for (MapObject obj : layer.getObjects()) {
+                if (obj instanceof TiledMapTileMapObject) {
+                    // Default MapProperties are stored within associated Tile object
+                    // Instance-specific overrides are stored in MapObject
+                    TiledMapTileMapObject tmtmo = (TiledMapTileMapObject)obj;
+                    TiledMapTile t = tmtmo.getTile();
+                    // Get list of default property keys
+                    Iterator<String> propertyKeys = t.getProperties().getKeys();
+                    // Iterate over keys; copy default values if needed
+                    while (propertyKeys.hasNext()) {
+                        String key = propertyKeys.next();
+                        // Check if value already exists; if not, create property with default value
+                        if (!obj.getProperties().containsKey(key)) {
+                            Object value = t.getProperties().get(key);
+                            obj.getProperties().put(key, value);
+                        }
+                    }
+                    if (t.getProperties().containsKey("name") && t.getProperties().get("name").equals(propertyName)) {
+                        list.add(obj);
+                    }
+                }
+            }
+        }
+        return list;
+    }
+
 }

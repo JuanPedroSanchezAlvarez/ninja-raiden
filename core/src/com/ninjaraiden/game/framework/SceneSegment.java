@@ -5,30 +5,29 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 
 public class SceneSegment {
 
-    private Actor actor;
-    private Action action;
+    private final Actor actor;
+    private final Action action;
 
-    public SceneSegment(Actor a1, Action a2)
-    {
+    public SceneSegment(final Actor a1, final Action a2) {
         actor = a1;
         action = a2;
     }
 
-    public void start()
-    {
+    public void start() {
         actor.clearActions();
         actor.addAction(action);
     }
-    public boolean isFinished()
-    {
+
+    public boolean isFinished() {
         return (actor.getActions().size == 0);
     }
-    public void finish()
-    {
-        // simulate 100000 seconds elapsed time to complete in-progress action
-        if ( actor.hasActions() )
+
+    public void finish() {
+        // Simulate 100000 seconds elapsed time to complete in-progress action
+        if (actor.hasActions()) {
             actor.getActions().first().act(100000);
-        // remove any remaining actions
+        }
+        // Remove any remaining actions
         actor.clearActions();
     }
 
