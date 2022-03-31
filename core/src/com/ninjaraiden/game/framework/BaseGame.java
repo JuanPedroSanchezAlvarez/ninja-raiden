@@ -22,7 +22,7 @@ public abstract class BaseGame extends Game {
 		game = this;
 	}
 
-	public static void setActiveScreen(BaseScreen s) {
+	public static void setActiveScreen(final BaseScreen s) {
 		game.setScreen(s);
 	}
 
@@ -34,9 +34,9 @@ public abstract class BaseGame extends Game {
 		labelStyle = new Label.LabelStyle();
 		FreeTypeFontGenerator fontGenerator = new FreeTypeFontGenerator(Gdx.files.internal("font/njnaruto.ttf"));
 		FreeTypeFontGenerator.FreeTypeFontParameter fontParameters = new FreeTypeFontGenerator.FreeTypeFontParameter();
-		fontParameters.size = 48;
+		fontParameters.size = 32;
 		fontParameters.color = Color.WHITE;
-		fontParameters.borderWidth = 2;
+		fontParameters.borderWidth = 0;
 		fontParameters.borderColor = Color.BLACK;
 		fontParameters.borderStraight = true;
 		fontParameters.minFilter = Texture.TextureFilter.Linear;
@@ -45,9 +45,9 @@ public abstract class BaseGame extends Game {
 		labelStyle.font = customFont;
 
 		textButtonStyle = new TextButton.TextButtonStyle();
-		Texture buttonTex = new Texture( Gdx.files.internal("assets/button.png") );
-		NinePatch buttonPatch = new NinePatch(buttonTex, 24,24,24,24);
-		textButtonStyle.up = new NinePatchDrawable( buttonPatch );
+		Texture buttonTex = new Texture(Gdx.files.internal("assets/button.png"));
+		NinePatch buttonPatch = new NinePatch(buttonTex, 24, 24, 24, 24);
+		textButtonStyle.up = new NinePatchDrawable(buttonPatch);
 		textButtonStyle.font = customFont;
 		textButtonStyle.fontColor = Color.GRAY;
 	}

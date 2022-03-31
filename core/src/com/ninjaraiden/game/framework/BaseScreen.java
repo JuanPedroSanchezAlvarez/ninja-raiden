@@ -11,12 +11,10 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 
 public abstract class BaseScreen implements Screen, InputProcessor {
 
-    protected Stage mainStage;
-    protected Stage uiStage;
-    protected Table uiTable;
+    protected final Stage mainStage, uiStage;
+    protected final Table uiTable;
 
-    public BaseScreen()
-    {
+    public BaseScreen() {
         mainStage = new Stage();
         uiStage = new Stage();
         uiTable = new Table();
@@ -24,55 +22,92 @@ public abstract class BaseScreen implements Screen, InputProcessor {
         uiStage.addActor(uiTable);
         initialize();
     }
+
     public abstract void initialize();
-    public abstract void update(float dt);
-    public void render(float dt)
-    {
-        uiStage.act(dt);
-        mainStage.act(dt);
-        update(dt);
+    public abstract void update(final float delta);
+
+    public boolean isTouchDownEvent(final Event e) {
+        return (e instanceof InputEvent) && ((InputEvent)e).getType().equals(InputEvent.Type.touchDown);
+    }
+
+    public boolean scrolled(final int amount) {
+        return false;
+    }
+
+    // METHODS REQUIRED BY Screen INTERFACE
+    @Override
+    public void render(final float delta) {
+        uiStage.act(delta);
+        mainStage.act(delta);
+        update(delta);
         Gdx.gl.glClearColor(0,0,0,1);
         //Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         mainStage.draw();
         uiStage.draw();
     }
-    // methods required by Screen interface
-    public void resize(int width, int height) { }
-    public void pause() { }
-    public void resume() { }
-    public void dispose() { }
+
+    @Override
+    public void resize(final int width, final int height) {}
+
+    @Override
+    public void pause() {}
+
+    @Override
+    public void resume() {}
+
+    @Override
+    public void dispose() {}
+
+    @Override
     public void show() {
         InputMultiplexer im = (InputMultiplexer)Gdx.input.getInputProcessor();
         im.addProcessor(this);
         im.addProcessor(uiStage);
         im.addProcessor(mainStage);
     }
+
+    @Override
     public void hide() {
         InputMultiplexer im = (InputMultiplexer)Gdx.input.getInputProcessor();
         im.removeProcessor(this);
         im.removeProcessor(uiStage);
         im.removeProcessor(mainStage);
     }
-    // methods required by InputProcessor interface
-    public boolean keyDown(int keycode)
-    { return false; }
-    public boolean keyUp(int keycode)
-    { return false; }
-    public boolean keyTyped(char c)
-    { return false; }
-    public boolean mouseMoved(int screenX, int screenY)
-    { return false; }
-    public boolean scrolled(int amount)
-    { return false; }
-    public boolean touchDown(int screenX, int screenY, int pointer, int button)
-    { return false; }
-    public boolean touchDragged(int screenX, int screenY, int pointer)
-    { return false; }
-    public boolean touchUp(int screenX, int screenY, int pointer, int button)
-    { return false; }
 
-    public boolean isTouchDownEvent(Event e)
-    {
-        return (e instanceof InputEvent) && ((InputEvent)e).getType().equals(InputEvent.Type.touchDown);
+    // METHODS REQUIRED BY InputProcessor INTERFACE
+    @Override
+    public boolean keyDown(final int keycode) {
+        return false;
     }
+
+    @Override
+    public boolean keyUp(final int keycode) {
+        return false;
+    }
+
+    @Override
+    public boolean keyTyped(final char c) {
+        return false;
+    }
+
+    @Override
+    public boolean mouseMoved(final int screenX, final int screenY) {
+        return false;
+    }
+
+    @Override
+    public boolean touchDown(final int screenX, final int screenY, final int pointer, final int button) {
+        return false;
+    }
+
+    @Override
+    public boolean touchDragged(final int screenX, final int screenY, final int pointer) {
+        return false;
+    }
+
+    @Override
+    public boolean touchUp(final int screenX, final int screenY, final int pointer, final int button) {
+        return false;
+    }
+
 }

@@ -2,7 +2,6 @@ package com.ninjaraiden.game.framework;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Camera;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Batch;
@@ -12,24 +11,19 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.viewport.Viewport;
 
 import java.util.ArrayList;
 
-public class BaseActor extends Group {
+public abstract class BaseActor extends Group {
 
     private Animation<TextureRegion> animation;
-    private float elapsedTime;
+    private float elapsedTime, acceleration, deceleration, maxSpeed;
     private boolean animationPaused;
-    private Vector2 velocityVec;
-    private Vector2 accelerationVec;
-    private float acceleration;
-    private float maxSpeed;
-    private float deceleration;
+    private Vector2 velocityVec, accelerationVec;
     private Polygon boundaryPolygon;
     private static Rectangle worldBounds;
 
-    public BaseActor(float x, float y, Stage s) {
+    public BaseActor(final float x, final float y, final Stage s) {
         super();
         setPosition(x,y);
         s.addActor(this);
@@ -43,82 +37,74 @@ public class BaseActor extends Group {
         deceleration = 0;
     }
 
-    public void setAnimation(Animation<TextureRegion> anim) {
+    public void setAnimation(final Animation<TextureRegion> anim) {
         animation = anim;
         TextureRegion tr = animation.getKeyFrame(0);
         float w = tr.getRegionWidth();
         float h = tr.getRegionHeight();
-        setSize( w, h );
-        setOrigin( w/2, h/2 );
-        if (boundaryPolygon == null)
+        setSize(w, h);
+        setOrigin(w/2, h/2);
+        if (boundaryPolygon == null) {
             setBoundaryRectangle();
+        }
     }
 
-    public void setAnimationPaused(boolean pause) {
+    public void setAnimationPaused(final boolean pause) {
         animationPaused = pause;
     }
 
     @Override
-    public void act(float dt) {
-        super.act( dt );
-        if (!animationPaused)
-            elapsedTime += dt;
+    public void act(final float delta) {
+        super.act(delta);
+        if (!animationPaused) {
+            elapsedTime += delta;
+        }
     }
 
     @Override
-    public void draw(Batch batch, float parentAlpha) {
-        // apply color tint effect
-        Color c = getColor();
-        batch.setColor(c.r, c.g, c.b, c.a);
-        if ( animation != null && isVisible() )
-            batch.draw( animation.getKeyFrame(elapsedTime),
-                    getX(), getY(), getOriginX(), getOriginY(),
-                    getWidth(), getHeight(), getScaleX(), getScaleY(), getRotation() );
-        super.draw( batch, parentAlpha );
-    }
-
-    public Animation<TextureRegion> loadAnimationFromFiles(String[] fileNames, float frameDuration, boolean loop) {
-        int fileCount = fileNames.length;
-        Array<TextureRegion> textureArray = new Array<TextureRegion>();
-        for (int n = 0; n < fileCount; n++)
-        {
-            String fileName = fileNames[n];
-            Texture texture = new Texture( Gdx.files.internal(fileName) );
-            texture.setFilter( Texture.TextureFilter.Linear, Texture.TextureFilter.Linear );
-            textureArray.add( new TextureRegion( texture ) );
+    public void draw(final Batch batch, final float parentAlpha) {
+        batch.setColor(getColor().r, getColor().g, getColor().b, getColor().a);
+        if (animation != null && isVisible()) {
+            batch.draw(animation.getKeyFrame(elapsedTime), getX(), getY(), getOriginX(), getOriginY(), getWidth(), getHeight(), getScaleX(), getScaleY(), getRotation());
         }
-        Animation<TextureRegion> anim = new Animation<TextureRegion>(frameDuration, textureArray);
-        if (loop)
-            anim.setPlayMode(Animation.PlayMode.LOOP);
-        else
-            anim.setPlayMode(Animation.PlayMode.NORMAL);
-        if (animation == null)
-            setAnimation(anim);
-        return anim;
+        super.draw(batch, parentAlpha);
     }
 
-    public Animation<TextureRegion> loadAnimationFromSheet(String fileName, int rows, int cols, float frameDuration, boolean loop) {
+    public Animation<TextureRegion> loadAnimationFromFiles(final String[] fileNames, final float frameDuration, final boolean loop) {
+        Array<TextureRegion> textureArray = new Array<>();
+        for (String fileName : fileNames) {
+            Texture texture = new Texture(Gdx.files.internal(fileName));
+            texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+            textureArray.add(new TextureRegion(texture));
+        }
+        return loadAnimation(frameDuration, textureArray, loop);
+    }
+
+    public Animation<TextureRegion> loadAnimationFromSheet(final String fileName, final int rows, final int cols, final float frameDuration, final boolean loop) {
         Texture texture = new Texture(Gdx.files.internal(fileName), true);
         texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
         int frameWidth = texture.getWidth() / cols;
         int frameHeight = texture.getHeight() / rows;
         TextureRegion[][] temp = TextureRegion.split(texture, frameWidth, frameHeight);
         Array<TextureRegion> textureArray = new Array<>();
-        for (int r = 0; r < rows; r++)
-            for (int c = 0; c < cols; c++)
-                textureArray.add( temp[r][c] );
-        Animation<TextureRegion> anim = new Animation<>(frameDuration,
-                textureArray);
-        if (loop)
-            anim.setPlayMode(Animation.PlayMode.LOOP);
-        else
-            anim.setPlayMode(Animation.PlayMode.NORMAL);
-        if (animation == null)
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                textureArray.add(temp[r][c]);
+            }
+        }
+        return loadAnimation(frameDuration, textureArray, loop);
+    }
+
+    private Animation<TextureRegion> loadAnimation(final float frameDuration, final Array<TextureRegion> textureArray, final boolean loop) {
+        Animation<TextureRegion> anim = new Animation<>(frameDuration, textureArray);
+        anim.setPlayMode(loop ? Animation.PlayMode.LOOP : Animation.PlayMode.NORMAL);
+        if (animation == null) {
             setAnimation(anim);
+        }
         return anim;
     }
 
-    public Animation<TextureRegion> loadTexture(String fileName) {
+    public Animation<TextureRegion> loadTexture(final String fileName) {
         String[] fileNames = new String[1];
         fileNames[0] = fileName;
         return loadAnimationFromFiles(fileNames, 1, true);
@@ -128,19 +114,20 @@ public class BaseActor extends Group {
         return animation.isAnimationFinished(elapsedTime);
     }
 
-    public void setSpeed(float speed) {
-        // if length is zero, then assume motion angle is zero degrees
-        if (velocityVec.len() == 0)
+    public void setSpeed(final float speed) {
+        // If length is zero, then assume motion angle is zero degrees
+        if (velocityVec.len() == 0) {
             velocityVec.set(speed, 0);
-        else
+        } else {
             velocityVec.setLength(speed);
+        }
     }
 
     public float getSpeed() {
         return velocityVec.len();
     }
 
-    public void setMotionAngle(float angle) {
+    public void setMotionAngle(final float angle) {
         velocityVec.setAngleDeg(angle);
     }
 
@@ -152,11 +139,11 @@ public class BaseActor extends Group {
         return (getSpeed() > 0);
     }
 
-    public void setAcceleration(float acc) {
+    public void setAcceleration(final float acc) {
         acceleration = acc;
     }
 
-    public void accelerateAtAngle(float angle) {
+    public void accelerateAtAngle(final float angle) {
         accelerationVec.add(new Vector2(acceleration, 0).setAngleDeg(angle));
     }
 
@@ -164,166 +151,157 @@ public class BaseActor extends Group {
         accelerateAtAngle(getRotation());
     }
 
-    public void setMaxSpeed(float ms) {
+    public void setMaxSpeed(final float ms) {
         maxSpeed = ms;
     }
 
-    public void setDeceleration(float dec) {
+    public void setDeceleration(final float dec) {
         deceleration = dec;
     }
 
-    public void applyPhysics(float dt) {
-        // apply acceleration
-        velocityVec.add( accelerationVec.x * dt, accelerationVec.y * dt );
+    public void applyPhysics(final float delta) {
+        // Apply acceleration
+        velocityVec.add(accelerationVec.x * delta, accelerationVec.y * delta);
         float speed = getSpeed();
-        // decrease speed (decelerate) when not accelerating
-        if (accelerationVec.len() == 0)
-            speed -= deceleration * dt;
-        // keep speed within set bounds
+        // Decrease speed (decelerate) when not accelerating
+        if (accelerationVec.len() == 0) {
+            speed -= deceleration * delta;
+        }
+        // Keep speed within set bounds
         speed = MathUtils.clamp(speed, 0, maxSpeed);
-        // update velocity
+        // Update velocity
         setSpeed(speed);
-        // apply velocity
-        moveBy( velocityVec.x * dt, velocityVec.y * dt );
-        // reset acceleration
-        accelerationVec.set(0,0);
+        // Apply velocity
+        moveBy(velocityVec.x * delta, velocityVec.y * delta);
+        // Reset acceleration
+        accelerationVec.set(0, 0);
     }
 
     public void setBoundaryRectangle() {
-        float w = getWidth();
-        float h = getHeight();
-        float[] vertices = {0,0, w,0, w,h, 0,h};
+        float[] vertices = {0, 0, getWidth(), 0, getWidth(), getHeight(), 0, getHeight()};
         boundaryPolygon = new Polygon(vertices);
     }
 
-    public void setBoundaryPolygon(int numSides) {
-        float w = getWidth();
-        float h = getHeight();
-        float[] vertices = new float[2*numSides];
-        for (int i = 0; i < numSides; i++)
-        {
+    public void setBoundaryPolygon(final int numSides) {
+        float[] vertices = new float[2 * numSides];
+        for (int i = 0; i < numSides; i++) {
             float angle = i * 6.28f / numSides;
             // x-coordinate
-            vertices[2*i] = w/2 * MathUtils.cos(angle) + w/2;
+            vertices[2 * i] = getWidth() / 2 * MathUtils.cos(angle) + getWidth() / 2;
             // y-coordinate
-            vertices[2*i+1] = h/2 * MathUtils.sin(angle) + h/2;
+            vertices[2 * i + 1] = getHeight() / 2 * MathUtils.sin(angle) + getHeight() / 2;
         }
         boundaryPolygon = new Polygon(vertices);
     }
 
     public Polygon getBoundaryPolygon() {
-        boundaryPolygon.setPosition( getX(), getY() );
-        boundaryPolygon.setOrigin( getOriginX(), getOriginY() );
-        boundaryPolygon.setRotation ( getRotation() );
-        boundaryPolygon.setScale( getScaleX(), getScaleY() );
+        boundaryPolygon.setPosition(getX(), getY());
+        boundaryPolygon.setOrigin(getOriginX(), getOriginY());
+        boundaryPolygon.setRotation(getRotation());
+        boundaryPolygon.setScale(getScaleX(), getScaleY());
         return boundaryPolygon;
     }
 
-    public boolean overlaps(BaseActor other) {
-        Polygon poly1 = this.getBoundaryPolygon();
-        Polygon poly2 = other.getBoundaryPolygon();
-        // initial test to improve performance
-        if ( !poly1.getBoundingRectangle().overlaps(poly2.getBoundingRectangle()) )
+    public boolean overlaps(final BaseActor other) {
+        // Initial test to improve performance
+        if (!this.getBoundaryPolygon().getBoundingRectangle().overlaps(other.getBoundaryPolygon().getBoundingRectangle())) {
             return false;
-        return Intersector.overlapConvexPolygons( poly1, poly2 );
+        }
+        return Intersector.overlapConvexPolygons(this.getBoundaryPolygon(), other.getBoundaryPolygon());
     }
 
-    public void centerAtPosition(float x, float y) {
-        setPosition( x - getWidth()/2 , y - getHeight()/2 );
+    public void centerAtPosition(final float x, final float y) {
+        setPosition(x - getWidth() / 2 , y - getHeight() / 2);
     }
 
-    public void centerAtActor(BaseActor other) {
-        centerAtPosition( other.getX() + other.getWidth()/2 , other.getY() + other.getHeight()/2 );
+    public void centerAtActor(final BaseActor other) {
+        centerAtPosition(other.getX() + other.getWidth() / 2 , other.getY() + other.getHeight() / 2);
     }
 
-    public void setOpacity(float opacity) {
+    public void setOpacity(final float opacity) {
         this.getColor().a = opacity;
     }
 
-    public Vector2 preventOverlap(BaseActor other) {
-        Polygon poly1 = this.getBoundaryPolygon();
-        Polygon poly2 = other.getBoundaryPolygon();
-        // initial test to improve performance
-        if ( !poly1.getBoundingRectangle().overlaps(poly2.getBoundingRectangle()) )
+    public Vector2 preventOverlap(final BaseActor other) {
+        // Initial test to improve performance
+        if (!this.getBoundaryPolygon().getBoundingRectangle().overlaps(other.getBoundaryPolygon().getBoundingRectangle())) {
             return null;
+        }
         Intersector.MinimumTranslationVector mtv = new Intersector.MinimumTranslationVector();
-        boolean polygonOverlap = Intersector.overlapConvexPolygons(poly1, poly2, mtv);
-        if ( !polygonOverlap )
+        if (!Intersector.overlapConvexPolygons(this.getBoundaryPolygon(), other.getBoundaryPolygon(), mtv)) {
             return null;
-        this.moveBy( mtv.normal.x * mtv.depth, mtv.normal.y * mtv.depth );
+        }
+        this.moveBy(mtv.normal.x * mtv.depth, mtv.normal.y * mtv.depth);
         return mtv.normal;
     }
 
-    public static ArrayList<BaseActor> getList(Stage stage, String className) {
-        ArrayList<BaseActor> list = new ArrayList<BaseActor>();
+    public static ArrayList<BaseActor> getList(final Stage stage, final String className) {
+        ArrayList<BaseActor> list = new ArrayList<>();
         Class theClass = null;
-        try
-        { theClass = Class.forName(className); }
-        catch (Exception error)
-        { error.printStackTrace(); }
-        for (Actor a : stage.getActors())
-        {
-            if ( theClass.isInstance( a ) )
-                list.add( (BaseActor)a );
+        try {
+            theClass = Class.forName(className);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (theClass != null) {
+            for (Actor a : stage.getActors()) {
+                if (theClass.isInstance(a)) {
+                    list.add((BaseActor)a);
+                }
+            }
         }
         return list;
     }
 
-    public static int count(Stage stage, String className) {
+    public static int count(final Stage stage, final String className) {
         return getList(stage, className).size();
     }
 
-    public static void setWorldBounds(float width, float height) {
-        worldBounds = new Rectangle( 0,0, width, height );
+    public static void setWorldBounds(final float width, final float height) {
+        worldBounds = new Rectangle(0, 0, width, height);
     }
 
-    public static void setWorldBounds(BaseActor ba) {
-        setWorldBounds( ba.getWidth(), ba.getHeight() );
+    public static void setWorldBounds(final BaseActor ba) {
+        setWorldBounds(ba.getWidth(), ba.getHeight());
     }
 
     public void boundToWorld() {
-        // check left edge
-        if (getX() < 0)
+        // Check left and right edge
+        if (getX() < 0) {
             setX(0);
-        // check right edge
-        if (getX() + getWidth() > worldBounds.width)
+        } else if (getX() + getWidth() > worldBounds.width) {
             setX(worldBounds.width - getWidth());
-        // check bottom edge
-        if (getY() < 0)
+        }
+        // Check bottom abd top edge
+        if (getY() < 0) {
             setY(0);
-        // check top edge
-        if (getY() + getHeight() > worldBounds.height)
+        } else if (getY() + getHeight() > worldBounds.height) {
             setY(worldBounds.height - getHeight());
+        }
     }
 
     public void alignCamera() {
         Camera cam = this.getStage().getCamera();
-        Viewport v = this.getStage().getViewport();
-        // center camera on actor
-        cam.position.set( this.getX() + this.getOriginX(), this.getY() + this.getOriginY(), 0 );
-        // bound camera to layout
-        cam.position.x = MathUtils.clamp(cam.position.x,
-                cam.viewportWidth/2, worldBounds.width - cam.viewportWidth/2);
-        cam.position.y = MathUtils.clamp(cam.position.y,
-                cam.viewportHeight/2, worldBounds.height - cam.viewportHeight/2);
+        // Center camera on actor
+        cam.position.set(this.getX() + this.getOriginX(), this.getY() + this.getOriginY(), 0);
+        // Bound camera to layout
+        cam.position.x = MathUtils.clamp(cam.position.x, cam.viewportWidth / 2, worldBounds.width - cam.viewportWidth / 2);
+        cam.position.y = MathUtils.clamp(cam.position.y, cam.viewportHeight / 2, worldBounds.height - cam.viewportHeight / 2);
         cam.update();
     }
 
-    public boolean isWithinDistance(float distance, BaseActor other)
-    {
-        Polygon poly1 = this.getBoundaryPolygon();
+    public boolean isWithinDistance(final float distance, final BaseActor other) {
         float scaleX = (this.getWidth() + 2 * distance) / this.getWidth();
         float scaleY = (this.getHeight() + 2 * distance) / this.getHeight();
-        poly1.setScale(scaleX, scaleY);
-        Polygon poly2 = other.getBoundaryPolygon();
-        // initial test to improve performance
-        if ( !poly1.getBoundingRectangle().overlaps(poly2.getBoundingRectangle()) )
+        this.getBoundaryPolygon().setScale(scaleX, scaleY);
+        // Initial test to improve performance
+        if (!this.getBoundaryPolygon().getBoundingRectangle().overlaps(other.getBoundaryPolygon().getBoundingRectangle())) {
             return false;
-        return Intersector.overlapConvexPolygons( poly1, poly2 );
+        }
+        return Intersector.overlapConvexPolygons(this.getBoundaryPolygon(), other.getBoundaryPolygon());
     }
 
-    public static Rectangle getWorldBounds()
-    {
+    public static Rectangle getWorldBounds() {
         return worldBounds;
     }
 
